@@ -13,6 +13,20 @@ dev:
 clean:
 	@rm -rf bin/*
 
+run-client:
+	@java -cp bin Main client
+
+run-server:
+	@java -cp bin Main server
+
+dev-client:
+	$(MAKE) build
+	$(MAKE) run-client
+
+dev-server:
+	$(MAKE) build
+	$(MAKE) run-server
+
 relatorio: relatorio_build
 
 relatorio_build:
