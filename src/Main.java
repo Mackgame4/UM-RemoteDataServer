@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.Scanner;
 
 import Shared.Terminal;
@@ -22,6 +23,8 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         System.out.println(Terminal.ANSI_YELLOW + "1. " + Terminal.ANSI_RESET + "Run Server");
         System.out.println(Terminal.ANSI_YELLOW + "2. " + Terminal.ANSI_RESET + "Run Client");
+        System.out.println(Terminal.ANSI_YELLOW + "3. " + Terminal.ANSI_RESET + "Run New Process Server");
+        System.out.println(Terminal.ANSI_YELLOW + "4. " + Terminal.ANSI_RESET + "Run New Process Client");
         System.out.println(Terminal.ANSI_YELLOW + "0. " + Terminal.ANSI_RESET + "Exit");
         System.out.print(Terminal.ANSI_YELLOW + "Choose an option: " + Terminal.ANSI_RESET);
         try {
@@ -29,10 +32,16 @@ public class Main {
             switch (option) {
                 case 1:
                     run_server();
-                    main(args);
                     break;
                 case 2:
                     run_client();
+                    break;
+                case 3:
+                    new_shell("server");
+                    main(args);
+                    break;
+                case 4:
+                    new_shell("client");
                     main(args);
                     break;
                 case 0:
@@ -50,14 +59,44 @@ public class Main {
     }
 
     public static void run_server() {
-        System.out.println(Terminal.ANSI_GREEN + "Running Server..." + Terminal.ANSI_RESET);
-        S_Main.start();
+        try {
+            S_Main.main();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void run_client() {
-        System.out.println(Terminal.ANSI_GREEN + "Running Client..." + Terminal.ANSI_RESET);
-        C_Main.start();
+        try {
+            C_Main.main();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
+    public static void new_shell(String type) {
+        String os = System.getProperty("os.name").toLowerCase();
+        ProcessBuilder processBuilder = null;
+        try {
+            if (os.contains("win")) {
+                // Windows command to open a new command prompt window
+                processBuilder = new ProcessBuilder("cmd", "/c", "start", "java", "-cp", "bin", "Main", type);
+            } else if (os.contains("mac")) {
+                // MacOS command to open a new terminal window
+                processBuilder = new ProcessBuilder("osascript", "-e", "tell application \"Terminal\" to do script \"java -cp bin Main " + type + "\"");
+            } else if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+                // Linux command to open a new terminal window (using gnome-terminal)
+                processBuilder = new ProcessBuilder("gnome-terminal", "--", "java", "-cp", "bin", "Main", type);
+            }
+            if (processBuilder != null) {
+                processBuilder.inheritIO().start();
+            } else {
+                System.out.println(Terminal.ANSI_RED + "Unsupported OS!" + Terminal.ANSI_RESET);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }    
 
     public static void exit(int status) {
         System.exit(status);
