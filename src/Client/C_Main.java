@@ -28,23 +28,30 @@ public class C_Main {
     }
 
     public void start() throws IOException {
+        String accountUsername = null;
         System.out.println(socket_in.readLine()); // Receive first message from server
         System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
         String userInput;
         while ((userInput = in.readLine()) != null) {
-            String[] input = CmdProtocol.parse(userInput);
-            String command = input[0];
-            //String[] args = input[1].split(" ");
-            if (command.equals(CmdProtocol.EXIT)) {
+            if (userInput.equals(CmdProtocol.EXIT)) {
                 break;
             }
-
             send_server(userInput);
-
             String response = socket_in.readLine();
-            System.out.println("Server response: " + response);
-
-            System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
+            if (response.contains(CmdProtocol.LOGIN)) {
+                accountUsername = response.split(":")[1];
+                response = socket_in.readLine();
+            }
+            if (response.contains(CmdProtocol.LOGOUT)) {
+                accountUsername = null;
+                response = socket_in.readLine();
+            }
+            System.out.println(response);
+            if (accountUsername != null) {
+                System.out.print(Terminal.ANSI_YELLOW + accountUsername + " $ " + Terminal.ANSI_RESET);
+            } else {
+                System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
+            }
         }
 
         // If Ctrl+C is pressed, or exit command is sent, close the socket

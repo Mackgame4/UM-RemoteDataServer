@@ -99,6 +99,7 @@ class ServerWorker implements Runnable {
                     for (ServerAccount account : server_accounts) {
                         if (account.getUsername().equals(username) && account.getPassword().equals(password)) {
                             client.setAccount(account);
+                            send_client(CmdProtocol.LOGIN + ":" + username);
                             send_client(Terminal.ANSI_GREEN + "Logged in successfully!" + Terminal.ANSI_RESET);
                             found = true;
                             break;
@@ -110,6 +111,7 @@ class ServerWorker implements Runnable {
                 } else if (command.equals(CmdProtocol.LOGOUT)) {
                     remove_account(client.getAccount());
                     client.setAccount(null);
+                    send_client(CmdProtocol.LOGOUT);
                     send_client(Terminal.ANSI_GREEN + "Logged out successfully!" + Terminal.ANSI_RESET);
                 } else if (command.equals(CmdProtocol.WHOAMI)) {
                     if (client.getAccount() != null) {
