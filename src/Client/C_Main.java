@@ -22,26 +22,39 @@ public class C_Main {
         in = new BufferedReader(new InputStreamReader(System.in));
     }
 
+    private void send_server(String message) {
+        socket_out.println(message);
+        socket_out.flush();
+    }
+
     public void start() throws IOException {
-        send_server(CmdProtocol.CONNECT); // Send connect request message to server
-        String response;
-        while ((response = socket_in.readLine()) != null) {
-            if (response.equals(CmdProtocol.LOGIN_REQ)) {
-                System.out.print("Enter username: ");
-                String username = in.readLine();
-                send_server(CmdProtocol.LOGIN + ":" + username);
-                continue;
+        System.out.println(socket_in.readLine()); // Receive first message from server
+        System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
+        String userInput;
+        while ((userInput = in.readLine()) != null) {
+            String[] input = CmdProtocol.parse(userInput);
+            String command = input[0];
+            String args = input[1];
+            if (command.equals(CmdProtocol.EXIT)) {
+                break;
             }
+            
+            System.out.println("Command: " + command + ", Args: " + args);
+            send_server(userInput);
+
+            String response = socket_in.readLine();
+            System.out.println("Server response: " + response);
+
+            System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
         }
+
+        // If Ctrl+C is pressed, or exit command is sent, close the socket
+        send_server(CmdProtocol.EXIT);
+        System.out.println(socket_in.readLine()); // Receive last message from server
 
         socket.shutdownOutput();
         socket.shutdownInput();
         socket.close();
-    }
-
-    private void send_server(String message) {
-        socket_out.println(message);
-        socket_out.flush();
     }
 
     public static void main() throws IOException {
