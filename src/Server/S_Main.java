@@ -59,12 +59,12 @@ class ServerWorker implements Runnable {
         return account;
     }
 
-    /*private String remove_account(ServerAccount account) {
+    private String remove_account(ServerAccount account) {
         synchronized (server_accounts) {
             server_accounts.remove(account);
         }
         return account.getUsername();
-    }*/
+    }
 
     @Override
     public void run() {
@@ -107,6 +107,10 @@ class ServerWorker implements Runnable {
                     if (!found) {
                         send_client(Terminal.ANSI_RED + "Invalid username or password!" + Terminal.ANSI_RESET);
                     }
+                } else if (command.equals(CmdProtocol.LOGOUT)) {
+                    remove_account(client.getAccount());
+                    client.setAccount(null);
+                    send_client(Terminal.ANSI_GREEN + "Logged out successfully!" + Terminal.ANSI_RESET);
                 } else if (command.equals(CmdProtocol.WHOAMI)) {
                     if (client.getAccount() != null) {
                         send_client(Terminal.ANSI_GREEN + "You are logged in as " + client.getAccount().getUsername() + Terminal.ANSI_RESET);

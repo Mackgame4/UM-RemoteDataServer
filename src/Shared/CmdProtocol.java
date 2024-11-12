@@ -3,6 +3,7 @@ package Shared;
 public class CmdProtocol {
     public static final String REGISTER = "register";
     public static final String LOGIN = "login";
+    public static final String LOGOUT = "logout";
     public static final String EXIT = "exit";
     public static final String WHOAMI = "whoami";
     public static final String CREATE_FILE = "create_file";
