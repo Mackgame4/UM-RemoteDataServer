@@ -34,12 +34,11 @@ public class C_Main {
         while ((userInput = in.readLine()) != null) {
             String[] input = CmdProtocol.parse(userInput);
             String command = input[0];
-            String args = input[1];
+            //String[] args = input[1].split(" ");
             if (command.equals(CmdProtocol.EXIT)) {
                 break;
             }
-            
-            System.out.println("Command: " + command + ", Args: " + args);
+
             send_server(userInput);
 
             String response = socket_in.readLine();

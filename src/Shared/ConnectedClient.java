@@ -1,26 +1,16 @@
 package Shared;
 
 public class ConnectedClient {
-    private String username;
-    private String password;
     public int id;
     protected String ip;
     protected int port;
+    private ServerAccount account;
 
-    public ConnectedClient(String username, String password, int id, String ip, int port) {
-        this.username = username;
-        this.password = password;
+    public ConnectedClient(int id, String ip, int port, ServerAccount account) {
         this.id = id;
         this.ip = ip;
         this.port = port;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
+        this.account = account;
     }
 
     public int getId() {
@@ -35,12 +25,8 @@ public class ConnectedClient {
         return port;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+    public ServerAccount getAccount() {
+        return account;
     }
 
     public void setId(int id) {
@@ -55,7 +41,19 @@ public class ConnectedClient {
         this.port = port;
     }
 
+    public void setAccount(ServerAccount account) {
+        this.account = account;
+    }
+
     public String toString() {
-        return "Client ID: " + id + ", Username: " + username + ", Password: " + password + ", IP: " + ip + ", Port: " + port;
+        return "Client ID: " + id + ", IP: " + ip + ", Port: " + port + ", Account: " + account;
+    }
+
+    public boolean equals(ConnectedClient client) {
+        return this.id == client.getId() && this.ip.equals(client.getIp()) && this.port == client.getPort();
+    }
+
+    public boolean equals(int id, String ip, int port) {
+        return this.id == id && this.ip.equals(ip) && this.port == port;
     }
 }
