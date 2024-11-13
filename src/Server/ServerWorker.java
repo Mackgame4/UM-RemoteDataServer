@@ -140,6 +140,10 @@ public class ServerWorker implements Runnable {
                 }
                 // Remove command
                 else if (command.equals(CmdProtocol.REMOVE)) {
+                    if (client.getAccount() == null || client.getAccount().getPermissionLevel() != 2) {
+                        send_client(Terminal.ANSI_RED + "Permission denied!" + Terminal.ANSI_RESET);
+                        continue;
+                    }
                     if (args.length < 1) {
                         send_client(Terminal.ANSI_YELLOW + "Usage: " + Terminal.ANSI_RESET + "remove <username>");
                         continue;
@@ -150,7 +154,7 @@ public class ServerWorker implements Runnable {
                         if (account.getUsername().equals(username)) {
                             if (client.getAccount() != null && client.getAccount().getUsername().equals(username)) {
                                 client.setAccount(null);
-                                send_client(CmdProtocol.LOGOUT + ":");
+                                send_client(CmdProtocol.LOGOUT + ":"); // After a command send we can only send one text response after
                             }
                             remove_account(account);
                             send_client(Terminal.ANSI_GREEN + "Account removed successfully!" + Terminal.ANSI_RESET);
