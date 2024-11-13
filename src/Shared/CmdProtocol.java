@@ -4,11 +4,13 @@ public class CmdProtocol {
     public static final String REGISTER = "register";
     public static final String LOGIN = "login";
     public static final String LOGOUT = "logout";
+    public static final String REMOVE = "remove";
     public static final String EXIT = "exit";
     public static final String WHOAMI = "whoami";
-    public static final String CREATE_FILE = "create_file";
-    public static final String DELETE_FILE = "delete_file";
-    public static final String READ_FILE = "read_file";
+    public static final String WRITE_FILE = "wr";
+    public static final String READ_FILE = "rd";
+    public static final String DELETE_FILE = "del";
+    public static final String LIST_FILES = "ls";
 
     public static String[] parse(String line) {
         int index = line.indexOf(" ");

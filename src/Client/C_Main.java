@@ -38,11 +38,11 @@ public class C_Main {
             }
             send_server(userInput);
             String response = socket_in.readLine();
-            if (response.contains(CmdProtocol.LOGIN)) {
+            if (response.contains(CmdProtocol.LOGIN+":")) {
                 accountUsername = response.split(":")[1];
                 response = socket_in.readLine();
             }
-            if (response.contains(CmdProtocol.LOGOUT)) {
+            if (response.contains(CmdProtocol.LOGOUT+":")) {
                 accountUsername = null;
                 response = socket_in.readLine();
             }
