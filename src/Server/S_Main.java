@@ -8,32 +8,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import Shared.Terminal;
-import Shared.ConnectedClient;
-import Shared.ServerAccount;
+import Shared.Account;
+import Shared.FramedConnection;
+import Shared.FramedConnection.Frame;
+import Shared.Notify;
+import Shared.Demultiplexer;
 
 public class S_Main {
-    private static int client_count = 0;
-    private static List<ConnectedClient> connected_clients = Collections.synchronizedList(new ArrayList<ConnectedClient>());
-    private static List<ServerAccount> server_accounts = new ArrayList<ServerAccount>();
+    private final static int WORKERS_PER_CONNECTION = 3;
 
     public static void main() throws IOException {
-        int port = 8888;
-        ServerSocket ss = new ServerSocket(port);
-        String addr = ss.getInetAddress().getHostAddress();
-        System.out.println(Terminal.ANSI_GREEN + "Server started at " + addr + ":" + port + Terminal.ANSI_RESET);
-
-        // Pre-populate the server with some accounts
-        server_accounts.add(new ServerAccount("admin", "admin", 2));
-        server_accounts.add(new ServerAccount("user", "user", 0));
-        server_accounts.add(new ServerAccount("writer", "writer", 1));
-
-        boolean running = true;
-        while (running) {
-            Socket socket = ss.accept();
-            client_count++;
-            Thread worker = new Thread(new ServerWorker(socket, connected_clients, client_count, server_accounts));
-            worker.start();
+        try (ServerSocket ss = new ServerSocket(8888)) {
+            Notify.info("Server started at " + ss.getInetAddress() + ":" + ss.getLocalPort());
+            boolean running = true;
+            while (running) {
+                Socket s = ss.accept();
+                FramedConnection c = new FramedConnection(s);
+                for (int i = 0; i < WORKERS_PER_CONNECTION; ++i) {
+                    Thread t = new Thread(new ServerWorker(s, c));
+                    t.start();
+                }
+            }
+            ss.close();
         }
-        ss.close();
     }
 }

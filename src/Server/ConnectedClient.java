@@ -1,12 +1,14 @@
-package Shared;
+package Server;
+
+import Shared.Account;
 
 public class ConnectedClient {
     public int id;
     protected String ip;
     protected int port;
-    private ServerAccount account;
+    private Account account;
 
-    public ConnectedClient(int id, String ip, int port, ServerAccount account) {
+    public ConnectedClient(int id, String ip, int port, Account account) {
         this.id = id;
         this.ip = ip;
         this.port = port;
@@ -25,7 +27,7 @@ public class ConnectedClient {
         return port;
     }
 
-    public ServerAccount getAccount() {
+    public Account getAccount() {
         return account;
     }
 
@@ -41,7 +43,7 @@ public class ConnectedClient {
         this.port = port;
     }
 
-    public void setAccount(ServerAccount account) {
+    public void setAccount(Account account) {
         this.account = account;
     }
 
