@@ -8,6 +8,20 @@ public class ConnectedClient {
     protected int port;
     private Account account;
 
+    public ConnectedClient() {
+        this.id = 0;
+        this.ip = "";
+        this.port = 0;
+        this.account = null;
+    }
+
+    public ConnectedClient(String ip, int port) {
+        this.id = 0;
+        this.ip = ip;
+        this.port = port;
+        this.account = null;
+    }
+
     public ConnectedClient(int id, String ip, int port, Account account) {
         this.id = id;
         this.ip = ip;

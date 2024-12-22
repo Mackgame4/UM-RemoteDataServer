@@ -1,11 +1,10 @@
 package Server;
 
-public class DataManager {
-    void put(String key, byte[] value) {
-        return;
-    }
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.Map;
+import java.util.HashMap;
 
-    byte[] get(String key) {
-        return null;
-    }
+public class DataManager {
+    private static Map<String, String> data = new HashMap<>();
+    private static ReentrantLock lock = new ReentrantLock();
 }

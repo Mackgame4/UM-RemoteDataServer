@@ -11,14 +11,17 @@ import Shared.Terminal;
 import Shared.CmdProtocol;
 import Shared.FramedConnection;
 import Shared.FramedConnection.Frame;
+import Shared.Notify;
 import Shared.Account;
 
 public class ServerWorker implements Runnable {
-    private Socket socket;
+    private Socket s;
     private final FramedConnection c;
+    private static AccountManager account_manager = new AccountManager();
+    private ConnectedClient client;
 
-    public ServerWorker(Socket socket, FramedConnection c) {
-        this.socket = socket;
+    public ServerWorker(Socket s, FramedConnection c) {
+        this.s = s;
         this.c = c;
     }
 
@@ -30,16 +33,27 @@ public class ServerWorker implements Runnable {
                 int tag = frame.tag;
                 String data = new String(frame.data);
                 if (frame.tag == 0)
-                    System.out.println("Got one-way: " + data);
+                    Notify.debug("Got one-way: " + data);
+                    if (data.equals(CmdProtocol.CONNECT)) {
+                        String client_ip = s.getInetAddress().toString();
+                        int client_port = s.getPort();
+                        Notify.success("Client connected from " + client_ip + ":" + client_port);
+                        client = new ConnectedClient(client_ip, client_port);
+                        account_manager.addClient(client);
+                    }
+                    else if (data.equals(CmdProtocol.EXIT)) {
+                        Notify.error("Client "+ client.getId() + " disconnected.");
+                        account_manager.removeClient(client);
+                        break;
+                    }
                 else if (frame.tag % 2 == 1) {
-                    System.out.println("Replying to: " + data);
+                    Notify.debug("Replying to: " + data);
                     c.send(frame.tag, data.toUpperCase().getBytes());
                 } else {
                     for (int i = 0; i < data.length(); ++i) {
                         String str = data.substring(i, i+1);
-                        System.out.println("Streaming: " + str);
+                        Notify.debug("Streaming: " + str);
                         c.send(tag, str.getBytes());
-                        Thread.sleep(100);
                     }
                     c.send(tag, new byte[0]);
                 }
