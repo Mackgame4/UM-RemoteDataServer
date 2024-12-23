@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class DataManager {
-    private static Map<String, String> data = new HashMap<>();
+    private Map<String, String> data = new HashMap<>();
     private static ReentrantLock lock = new ReentrantLock();
 
-    public static void put(String key, String value) {
+    public void put(String key, String value) {
         lock.lock();
         try {
             data.put(key, value);
@@ -17,7 +17,7 @@ public class DataManager {
         }
     }
 
-    public static String get(String key) {
+    public String get(String key) {
         lock.lock();
         try {
             return data.get(key);
@@ -26,10 +26,19 @@ public class DataManager {
         }
     }
 
-    public static void remove(String key) {
+    public void remove(String key) {
         lock.lock();
         try {
             data.remove(key);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Map<String, String> getAll() {
+        lock.lock();
+        try {
+            return new HashMap<>(data);
         } finally {
             lock.unlock();
         }

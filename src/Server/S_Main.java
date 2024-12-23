@@ -14,10 +14,12 @@ class ServerWorker implements Runnable {
     private final FramedConnection c;
     private final AccountManager account_manager;
     private ConnectedClient client;
+    private DataManager data_manager;
 
-    public ServerWorker(FramedConnection c, AccountManager account_manager, ConnectedClient client) {
+    public ServerWorker(FramedConnection c, AccountManager account_manager, DataManager data_manager, ConnectedClient client) {
         this.c = c;
         this.account_manager = account_manager;
+        this.data_manager = data_manager;
         this.client = client;
     }
 
@@ -77,6 +79,65 @@ class ServerWorker implements Runnable {
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.WHOAMI, (String[]) new String[]{client.toString()}));
                         }
                     }
+                    else if (command.equals(CmdProtocol.WRITE_FILE)) {
+                        if (args.length != 2) {
+                            Notify.error("Received invalid write command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid write command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            String key = args[0];
+                            String value = args[1];
+                            data_manager.put(key, value);
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"{ key: '" + key + "', value: '" + value + "' } written."}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.READ_FILE)) {
+                        if (args.length != 1) {
+                            Notify.error("Received invalid read command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid read command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            String key = args[0];
+                            String value = data_manager.get(key);
+                            if (value == null) {
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Key '" + key + "' not found."}));
+                            } else {
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.READ_FILE, (String[]) new String[]{value}));
+                            }
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.DELETE_FILE)) {
+                        if (args.length != 1) {
+                            Notify.error("Received invalid delete command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid delete command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            String key = args[0];
+                            data_manager.remove(key);
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"Key '" + key + "' deleted."}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.LIST_FILES)) {
+                        if (args.length != 0) {
+                            Notify.error("Received invalid list command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid list command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, new String[]{data_manager.getAll().toString()}));
+                        }
+                    }
                     else {
                         Notify.error("Unknown command.");
                         c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Unknown command."})); // c.sendBytes(tag, data);
@@ -114,6 +175,7 @@ public class S_Main {
         try (ServerSocket ss = new ServerSocket(8888)) {
             Notify.info("Server started at " + ss.getInetAddress() + ":" + ss.getLocalPort());
             AccountManager account_manager = new AccountManager();
+            DataManager data_manager = new DataManager();
             // pre-populate accounts
             account_manager.addAccount(new Account("admin", "admin"));
             boolean running = true;
@@ -125,7 +187,7 @@ public class S_Main {
                     Thread t = new Thread(new ServerWorker(s, c, account_manager));
                     t.start();
                 }*/
-                Thread t = new Thread(new ServerWorker(c, account_manager, client));
+                Thread t = new Thread(new ServerWorker(c, account_manager, data_manager, client));
                 t.start();
             }
             ss.close();

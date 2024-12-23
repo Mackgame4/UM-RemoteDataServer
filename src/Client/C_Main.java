@@ -74,6 +74,9 @@ public class C_Main {
                         else if (command.equals(CmdProtocol.WHOAMI)) {
                             Notify.info(message);
                         }
+                        else if (command.equals(CmdProtocol.LIST_FILES)) {
+                            Notify.info(message);
+                        }
                         else {
                             Notify.info(response);
                         }
