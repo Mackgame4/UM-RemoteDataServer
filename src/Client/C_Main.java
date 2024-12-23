@@ -23,7 +23,7 @@ public class C_Main {
 
     public static void main() throws IOException {
         try {
-            Socket s = new Socket("0.0.0.0", 8888);
+            Socket s = new Socket(CmdProtocol.LOCAL_IP, CmdProtocol.PORT);
             BufferedReader system_in = new BufferedReader(new InputStreamReader(System.in));
             Notify.info("Connected to server (" + s.getLocalAddress() + ":" + s.getLocalPort() + ") at " + s.getInetAddress() + ":" + s.getPort());
             Demultiplexer m = new Demultiplexer(new FramedConnection(s));
@@ -44,7 +44,26 @@ public class C_Main {
                         m.sendBytes(thread_request_tag, sending);
                         byte[] data = m.receive(thread_request_tag);
                         String response = new String(data);
-                        Notify.debug("Response: " + response);
+                        Object[] data_array = CmdProtocol.parse(response);
+                        String command = (String) data_array[0];
+                        String[] args = (String[]) data_array[1];
+                        if (command.equals(CmdProtocol.COMMAND_ERROR)) {
+                            if (args.length > 0) {
+                                String error = null;
+                                for (String arg : args) {
+                                    if (error == null) {
+                                        error = arg;
+                                    } else {
+                                        error += " " + arg;
+                                    }
+                                }
+                                Notify.error(error);
+                            } else {
+                                Notify.error("Unknown error.");
+                            }
+                        } else {
+                            Notify.notify("info", response);
+                        }
                         askForInput();
                     } catch (Exception e) {
                         Notify.error(e.getMessage());
