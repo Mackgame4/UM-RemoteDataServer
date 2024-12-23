@@ -69,7 +69,7 @@ public class C_Main {
                         }
                         else if (command.equals(CmdProtocol.LOGIN)) {
                             username = args[0];
-                            Notify.success("Logged in as " + username);
+                            Notify.success("Logged in as '" + username + "'.");
                         }
                         else if (command.equals(CmdProtocol.WHOAMI)) {
                             Notify.info(message);
