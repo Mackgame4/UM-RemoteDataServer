@@ -4,6 +4,7 @@ public class Notify {
     public static final boolean Debug = true;
 
     public static void notify(String type, String title, String message) {
+        System.out.print("\r"); // Move cursor to the beginning of the line
         if (type.equals("error")) {
             System.out.println(Terminal.ANSI_RED_BACKGROUND + title + Terminal.ANSI_RESET + " " + Terminal.ANSI_RED + message + Terminal.ANSI_RESET);
         } else if (type.equals("success")) {

@@ -15,6 +15,10 @@ public class CmdProtocol {
     public static final String LIST_FILES = "ls";
     public static final String COMMAND_SUCC = "success";
     public static final String COMMAND_ERROR = "error";
+    public static final String MWRITE_FILE = "mwrite";
+    public static final String MREAD_FILE = "mread";
+    public static final String MDELETE_FILE = "mdel";
+    public static final String READ_FILE_WHEN = "readw";
 
     // 0 - one way, odd - request, even - stream of messages
     public static final int ONE_WAY_TAG = 0;

@@ -3,6 +3,8 @@ package Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.HashMap;
 
 import Shared.Notify;
 import Shared.FramedConnection;
@@ -79,7 +81,7 @@ class ServerWorker implements Runnable {
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.WHOAMI, (String[]) new String[]{client.toString()}));
                         }
                     }
-                    else if (command.equals(CmdProtocol.WRITE_FILE)) {
+                    else if (command.equals(CmdProtocol.WRITE_FILE)) { // example: "write key1 value1"
                         if (args.length != 2) {
                             Notify.error("Received invalid write command.");
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid write command."}));
@@ -94,7 +96,7 @@ class ServerWorker implements Runnable {
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"{ key: '" + key + "', value: '" + value + "' } written."}));
                         }
                     }
-                    else if (command.equals(CmdProtocol.READ_FILE)) {
+                    else if (command.equals(CmdProtocol.READ_FILE)) { // example: "read key1"
                         if (args.length != 1) {
                             Notify.error("Received invalid read command.");
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid read command."}));
@@ -112,7 +114,7 @@ class ServerWorker implements Runnable {
                             }
                         }
                     }
-                    else if (command.equals(CmdProtocol.DELETE_FILE)) {
+                    else if (command.equals(CmdProtocol.DELETE_FILE)) { // example: "del key1"
                         if (args.length != 1) {
                             Notify.error("Received invalid delete command.");
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid delete command."}));
@@ -136,6 +138,73 @@ class ServerWorker implements Runnable {
                         }
                         else {
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, new String[]{data_manager.getAll().toString()}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.MWRITE_FILE)) { // example: "mwrite key1 value1 key2 value2 key3 value3"
+                        if (args.length % 2 != 0) {
+                            Notify.error("Received invalid mwrite command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid mwrite command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            Map<String, byte[]> pairs = new HashMap<>();
+                            for (int i = 0; i < args.length; i += 2) {
+                                pairs.put(args[i], args[i + 1].getBytes());
+                            }
+                            data_manager.multiPut(pairs);
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"Multiple keys written."}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.MREAD_FILE)) { // example: "mread key1 key2 key3"
+                        if (args.length == 0) {
+                            Notify.error("Received invalid mread command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid mread command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            Map<String, String> result = data_manager.multiGet(args);
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.MREAD_FILE, new String[]{result.toString()}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.MDELETE_FILE)) { // example: "mdel key1 key2 key3"
+                        if (args.length == 0) {
+                            Notify.error("Received invalid mdelete command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid mdelete command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            data_manager.multiRemove(args);
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"Multiple keys deleted."}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.READ_FILE_WHEN)) { // example: "readw key1 key2 value2"
+                        if (args.length != 3) {
+                            Notify.error("Received invalid readw command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid readw command."}));
+                        }
+                        else if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        }
+                        else {
+                            String key = args[0];
+                            String keyCond = args[1];
+                            byte[] valueCond = args[2].getBytes();
+                            byte[] value = data_manager.getWhen(key, keyCond, valueCond);
+                            if (value == null) {
+                                //c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Key '" + key + "' not found or condition not met."}));
+                                // TODO: do it
+                                // simulate the condition being met later
+                                Thread.sleep(2000);
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.READ_FILE_WHEN, (String[]) new String[]{"Condition met."}));
+                            } else {
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.READ_FILE_WHEN, (String[]) new String[]{new String(value)}));
+                            }
                         }
                     }
                     else {
