@@ -1,12 +1,11 @@
+import Client.C_Main;
+import Server.S_Main;
+import Shared.Terminal;
 import java.io.IOException;
 import java.util.Scanner;
 
-import Shared.Terminal;
-import Client.C_Main;
-import Server.S_Main;
-
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         if (args.length >= 1) {
             if (args[0].equals("server")) {
                 run_server();
@@ -58,7 +57,7 @@ public class Main {
         scanner.close();
     }
 
-    public static void run_server() {
+    public static void run_server() throws InterruptedException {
         try {
             S_Main.main();
         } catch (IOException e) {

@@ -1,21 +1,25 @@
 package Client;
 
+import Shared.CmdProtocol;
+import Shared.Demultiplexer;
+import Shared.FramedConnection;
+import Shared.Notify;
+import Shared.Terminal;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-
-import Shared.Terminal;
-import Shared.CmdProtocol;
-import Shared.Notify;
-import Shared.FramedConnection;
-import Shared.Demultiplexer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class C_Main {
-    private static int thread_request_tag = CmdProtocol.REQUEST_TAG;
+
+    private static AtomicInteger thread_request_tag = new AtomicInteger(CmdProtocol.REQUEST_TAG);
+    private static final int MAX_THREADS = 10; // Limita o número de threads simultâneas
 
     public static void incrementTag() {
-        thread_request_tag += 2;
+        thread_request_tag.addAndGet(2);
     }
 
     public static void askForInput() {
@@ -23,44 +27,65 @@ public class C_Main {
     }
 
     public static void main() throws IOException {
+        ExecutorService executor = Executors.newFixedThreadPool(MAX_THREADS); // Gerencia o pool de threads
+
         try {
             Socket s = new Socket("0.0.0.0", 8888);
             BufferedReader system_in = new BufferedReader(new InputStreamReader(System.in));
-            Notify.info("Connected to server ("+s.getLocalAddress()+":"+s.getLocalPort()+") at "+s.getInetAddress()+":"+s.getPort());
+            Notify.info("Connected to server (" + s.getLocalAddress() + ":" + s.getLocalPort() + ") at " + s.getInetAddress() + ":" + s.getPort());
             Demultiplexer m = new Demultiplexer(new FramedConnection(s));
             m.start();
-            m.sendBytes(0, CmdProtocol.CONNECT); // Send connect command to server
+            m.sendBytes(0, CmdProtocol.CONNECT); // Envia comando de conexão ao servidor
             askForInput();
+
             String userInput;
             while ((userInput = system_in.readLine()) != null) {
                 if (userInput.equals(CmdProtocol.EXIT)) {
                     break;
                 }
-                // A thread for each command
+
                 final String sending = userInput;
-                Thread t = new Thread(() -> {
+                final int currentTag = thread_request_tag.get();
+                executor.submit(() -> {
                     try {
-                        Notify.debug("Sending from thread " + Thread.currentThread().threadId() + " with tag " + thread_request_tag);
-                        Notify.debug("Sending: " + sending);
-                        m.sendBytes(thread_request_tag, sending);
-                        byte[] data = m.receive(thread_request_tag);
-                        String response = new String(data);
-                        Notify.debug("Response: " + response);
+                        if (sending.startsWith(CmdProtocol.GET_WHEN)) {
+                            handleGetWhen(m, currentTag, sending);
+                        } else {
+                            Notify.debug("Sending from thread " + Thread.currentThread().threadId() + " with tag " + currentTag);
+                            Notify.debug("Sending: " + sending);
+                            m.sendBytes(currentTag, sending);
+                            byte[] data = m.receive(currentTag);
+                            String response = new String(data);
+                            Notify.debug("Response: " + response);
+                        }
                         askForInput();
                     } catch (Exception e) {
                         Notify.error(e.getMessage());
                     }
                 });
-                t.start();
-                t.join();
-                incrementTag();
+                incrementTag(); // Incrementa tag para a próxima thread
             }
-            m.sendBytes(0, CmdProtocol.EXIT); // Send exit command to server
+
+            m.sendBytes(0, CmdProtocol.EXIT); // Envia comando de saída ao servidor
             Notify.notify("error", "Exiting...");
+            executor.shutdown(); // Encerra o executor
             m.close();
             s.close();
         } catch (Exception e) {
             Notify.error(e.getMessage());
+        }
+    }
+
+    private static void handleGetWhen(Demultiplexer m, int tag, String command) throws IOException, InterruptedException {
+        Notify.debug("Sending getWhen command: " + command);
+        m.sendBytes(tag, command); // Envia o comando ao servidor
+        Notify.debug("Awaiting response for getWhen...");
+        byte[] response = m.receive(tag); // Espera a resposta
+        String result = new String(response);
+        if ("null".equals(result)) {
+            Notify.info("No data satisfies the condition.");
+        } else {
+            Notify.info("getWhen result: " + result);
         }
     }
 }
