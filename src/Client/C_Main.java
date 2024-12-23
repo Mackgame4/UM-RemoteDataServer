@@ -36,56 +36,66 @@ public class C_Main {
             m.sendBytes(CmdProtocol.ONE_WAY_TAG, CmdProtocol.CONNECT); // Send connect command to server
             askForInput();
             String userInput;
-            while ((userInput = system_in.readLine()) != null) {
-                if (userInput.equals(CmdProtocol.EXIT)) {
-                    break;
-                }
-                // A thread for each command
-                final String sending = userInput;
-                Thread t = new Thread(() -> {
-                    try {
-                        Notify.debug("Sending from thread " + Thread.currentThread().threadId() + " with tag " + thread_request_tag);
-                        Notify.debug("Sending: " + sending);
-                        m.sendBytes(thread_request_tag, sending);
+
+            // Start a new thread to handle receiving responses
+            new Thread(() -> {
+                try {
+                    while (true) {
                         byte[] data = m.receive(thread_request_tag);
                         String response = new String(data);
                         Object[] data_array = CmdProtocol.parse(response);
                         String command = (String) data_array[0];
                         String[] args = (String[]) data_array[1];
                         String message = CmdProtocol.argsAsMessage(args);
+
                         if (command.equals(CmdProtocol.COMMAND_ERROR)) {
                             if (args.length > 0) {
                                 Notify.error(message);
                             } else {
                                 Notify.error("Unknown error.");
                             }
-                        }
-                        else if (command.equals(CmdProtocol.COMMAND_SUCC)) {
+                        } else if (command.equals(CmdProtocol.COMMAND_SUCC)) {
                             if (args.length > 0) {
                                 Notify.success(message);
                             } else {
                                 Notify.success("Unknown command.");
                             }
-                        }
-                        else if (command.equals(CmdProtocol.LOGIN)) {
+                        } else if (command.equals(CmdProtocol.LOGIN)) {
                             username = args[0];
                             Notify.success("Logged in as '" + username + "'.");
-                        }
-                        else if (command.equals(CmdProtocol.WHOAMI) || command.equals(CmdProtocol.LIST_FILES)) {
+                        } else if (command.equals(CmdProtocol.WHOAMI) || command.equals(CmdProtocol.LIST_FILES)) {
                             Notify.info(message);
-                        }
-                        else {
+                        } else {
                             Notify.info(response);
                         }
-                        askForInput();
+
+                        askForInput(); // Request input again after processing response
+                    }
+                } catch (Exception e) {
+                    Notify.error(e.getMessage());
+                }
+            }).start();
+
+            // Main loop for accepting commands from user input
+            while ((userInput = system_in.readLine()) != null) {
+                if (userInput.equals(CmdProtocol.EXIT)) {
+                    break;
+                }
+                // A thread for each command (no waiting for response here)
+                final String sending = userInput;
+                new Thread(() -> {
+                    try {
+                        Notify.debug("Sending from thread " + Thread.currentThread().threadId() + " with tag " + thread_request_tag);
+                        Notify.debug("Sending: " + sending);
+                        m.sendBytes(thread_request_tag, sending);
+                        incrementTag();  // Increment tag after sending
+                        askForInput();   // Prompt for next input
                     } catch (Exception e) {
                         Notify.error(e.getMessage());
                     }
-                });
-                t.start();
-                t.join();
-                incrementTag();
+                }).start();
             }
+
             m.shutdown();
             Notify.notify("error", "Exiting...");
             m.close();
