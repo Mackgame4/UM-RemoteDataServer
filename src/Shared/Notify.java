@@ -12,7 +12,10 @@ public class Notify {
             System.out.println(Terminal.ANSI_YELLOW_BACKGROUND + title + Terminal.ANSI_RESET + " " + Terminal.ANSI_YELLOW + message + Terminal.ANSI_RESET);
         } else if (type.equals("info")) {
             System.out.println(Terminal.ANSI_BLUE_BACKGROUND + title + Terminal.ANSI_RESET + " " + Terminal.ANSI_BLUE + message + Terminal.ANSI_RESET);
-        } else if (type.equals("debug") && Debug) {
+        } else if (type.equals("debug")) {
+            if (!Debug) {
+                return;
+            }
             System.out.println(Terminal.ANSI_CYAN_BACKGROUND + title + Terminal.ANSI_RESET + " " + Terminal.ANSI_CYAN + message + Terminal.ANSI_RESET);
         } else {
             System.out.println(title + " " + message);

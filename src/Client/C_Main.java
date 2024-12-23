@@ -12,13 +12,18 @@ import Shared.FramedConnection;
 
 public class C_Main {
     private static int thread_request_tag = CmdProtocol.REQUEST_TAG;
+    private static String username = null;
 
     public static void incrementTag() {
         thread_request_tag += 2;
     }
 
     public static void askForInput() {
-        System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
+        if (username == null) {
+            System.out.print(Terminal.ANSI_YELLOW + "$ " + Terminal.ANSI_RESET);
+        } else {
+            System.out.print(Terminal.ANSI_YELLOW + username + "$ " + Terminal.ANSI_RESET);
+        }
     }
 
     public static void main() throws IOException {
@@ -47,22 +52,30 @@ public class C_Main {
                         Object[] data_array = CmdProtocol.parse(response);
                         String command = (String) data_array[0];
                         String[] args = (String[]) data_array[1];
+                        String message = CmdProtocol.argsAsMessage(args);
                         if (command.equals(CmdProtocol.COMMAND_ERROR)) {
                             if (args.length > 0) {
-                                String error = null;
-                                for (String arg : args) {
-                                    if (error == null) {
-                                        error = arg;
-                                    } else {
-                                        error += " " + arg;
-                                    }
-                                }
-                                Notify.error(error);
+                                Notify.error(message);
                             } else {
                                 Notify.error("Unknown error.");
                             }
-                        } else {
-                            Notify.notify("info", response);
+                        }
+                        else if (command.equals(CmdProtocol.COMMAND_SUCC)) {
+                            if (args.length > 0) {
+                                Notify.success(message);
+                            } else {
+                                Notify.success("Unknown command.");
+                            }
+                        }
+                        else if (command.equals(CmdProtocol.LOGIN)) {
+                            String username = args[0];
+                            Notify.success("Logged in as " + username);
+                        }
+                        else if (command.equals(CmdProtocol.WHOAMI)) {
+                            Notify.info(message);
+                        }
+                        else {
+                            Notify.info(response);
                         }
                         askForInput();
                     } catch (Exception e) {

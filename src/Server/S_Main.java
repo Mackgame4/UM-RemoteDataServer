@@ -8,6 +8,7 @@ import Shared.Notify;
 import Shared.FramedConnection;
 import Shared.CmdProtocol;
 import Shared.FramedConnection.Frame;
+import Shared.Account;
 
 class ServerWorker implements Runnable {
     private Socket s;
@@ -47,16 +48,40 @@ class ServerWorker implements Runnable {
                     Notify.debug("Replying to: " + data);
                     if (command.equals(CmdProtocol.LOGIN)) {
                         if (args.length != 2) {
-                            Notify.error("Invalid login command.");
+                            Notify.error("Received invalid login command.");
                             c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid login command."}));
                         } else {
                             String username = args[0];
                             String password = args[1];
-                            Notify.debug("Login attempt: " + username + " " + password);
-                            c.sendBytes(tag, username);
+                            if (account_manager.checkAccount(new Account(username, password))) {
+                                client.setAccount(new Account(username, password));
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.LOGIN, (String[]) new String[]{username}));
+                            } else {
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid username or password."}));
+                            }
                         }
-                    } else {
-                        c.sendBytes(tag, data);
+                    }
+                    else if (command.equals(CmdProtocol.REGISTER)) {
+                        if (args.length != 2) {
+                            Notify.error("Received invalid register command.");
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Invalid register command."}));
+                        } else {
+                            String username = args[0];
+                            String password = args[1];
+                            account_manager.addAccount(new Account(username, password));
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_SUCC, (String[]) new String[]{"Account '" + username + "' created."}));
+                        }
+                    }
+                    else if (command.equals(CmdProtocol.WHOAMI)) {
+                        if (client.getAccount() == null) {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"No account logged in."}));
+                        } else {
+                            c.sendBytes(tag, CmdProtocol.build(CmdProtocol.WHOAMI, (String[]) new String[]{client.toString()}));
+                        }
+                    }
+                    else {
+                        Notify.error("Unknown command.");
+                        c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Unknown command."})); // c.sendBytes(tag, data);
                     }
                 } else { // Streaming for even tags
                     for (int i = 0; i < data.length(); ++i) {
@@ -91,6 +116,8 @@ public class S_Main {
         try (ServerSocket ss = new ServerSocket(8888)) {
             Notify.info("Server started at " + ss.getInetAddress() + ":" + ss.getLocalPort());
             AccountManager account_manager = new AccountManager();
+            // pre-populate accounts
+            account_manager.addAccount(new Account("admin", "admin"));
             boolean running = true;
             while (running) {
                 Socket s = ss.accept();
