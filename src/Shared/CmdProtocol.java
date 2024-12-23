@@ -1,7 +1,7 @@
 package Shared;
 
 public class CmdProtocol {
-    public static int MAX_LOGGED_CLIENTS = 0; // 0 - infinite, 1 - one, 2 - two, etc.
+    public static int MAX_LOGGED_CLIENTS = 1; // 0 - infinite, 1 - one, 2 - two, etc.
     public static int WORKERS_PER_CONNECTION = 3; // min {1, infinity}
     public static final String LOCAL_IP = "0.0.0.0";
     public static final int PORT = 8888; 
