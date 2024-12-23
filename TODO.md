@@ -6,7 +6,7 @@ CommandManager - concurrency on the client
 data and accounts managers - concurrency on the server
 
 whats left:
-getWhen
+getWhen (use condition?)
 
 Limite de utilizadores concorrentes
 • Sendo S um parâmetro de configuração, só podem existir no máximo S sessões concorrentes

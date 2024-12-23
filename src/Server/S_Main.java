@@ -197,11 +197,7 @@ class ServerWorker implements Runnable {
                             byte[] valueCond = args[2].getBytes();
                             byte[] value = data_manager.getWhen(key, keyCond, valueCond);
                             if (value == null) {
-                                //c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Key '" + key + "' not found or condition not met."}));
-                                // TODO: do it
-                                // simulate the condition being met later
-                                Thread.sleep(2000);
-                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.READ_FILE_WHEN, (String[]) new String[]{"Condition met."}));
+                                c.sendBytes(tag, CmdProtocol.build(CmdProtocol.COMMAND_ERROR, (String[]) new String[]{"Key '" + key + "' not found."}));
                             } else {
                                 c.sendBytes(tag, CmdProtocol.build(CmdProtocol.READ_FILE_WHEN, (String[]) new String[]{new String(value)}));
                             }
@@ -239,7 +235,7 @@ class ServerWorker implements Runnable {
 }
 
 public class S_Main {
-    //private final static int WORKERS_PER_CONNECTION = 3;
+    private final static int WORKERS_PER_CONNECTION = 3;
     public static void main() throws IOException {
         try (ServerSocket ss = new ServerSocket(8888)) {
             Notify.info("Server started at " + ss.getInetAddress() + ":" + ss.getLocalPort());
@@ -252,12 +248,10 @@ public class S_Main {
                 Socket s = ss.accept();
                 FramedConnection c = new FramedConnection(s);
                 ConnectedClient client = new ConnectedClient(s.getInetAddress().toString(), s.getPort());
-                /*for (int i = 0; i < WORKERS_PER_CONNECTION; ++i) {
-                    Thread t = new Thread(new ServerWorker(s, c, account_manager));
+                for (int i = 0; i < WORKERS_PER_CONNECTION; ++i) {
+                    Thread t = new Thread(new ServerWorker(c, account_manager, data_manager, client));
                     t.start();
-                }*/
-                Thread t = new Thread(new ServerWorker(c, account_manager, data_manager, client));
-                t.start();
+                }
             }
             ss.close();
         }
