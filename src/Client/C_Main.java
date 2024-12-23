@@ -9,7 +9,6 @@ import Shared.Terminal;
 import Shared.CmdProtocol;
 import Shared.Notify;
 import Shared.FramedConnection;
-import Shared.Demultiplexer;
 
 public class C_Main {
     private static int thread_request_tag = CmdProtocol.REQUEST_TAG;

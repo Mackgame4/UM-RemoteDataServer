@@ -1,4 +1,4 @@
-package Shared;
+package Client;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -8,6 +8,8 @@ import java.util.ArrayDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import Shared.CmdProtocol;
+import Shared.FramedConnection;
 import Shared.FramedConnection.Frame;
 
 public class Demultiplexer implements AutoCloseable {
