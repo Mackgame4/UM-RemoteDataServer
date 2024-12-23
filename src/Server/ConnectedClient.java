@@ -61,6 +61,10 @@ public class ConnectedClient {
         this.account = account;
     }
 
+    public boolean isLoggedIn() {
+        return account != null;
+    }
+
     public String toString() {
         return "Client ID: " + id + ", IP: " + ip + ", Port: " + port + ", Account: " + account;
     }

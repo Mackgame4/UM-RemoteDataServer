@@ -235,7 +235,6 @@ class ServerWorker implements Runnable {
 }
 
 public class S_Main {
-    private final static int WORKERS_PER_CONNECTION = 3;
     public static void main() throws IOException {
         try (ServerSocket ss = new ServerSocket(8888)) {
             Notify.info("Server started at " + ss.getInetAddress() + ":" + ss.getLocalPort());
@@ -248,7 +247,11 @@ public class S_Main {
                 Socket s = ss.accept();
                 FramedConnection c = new FramedConnection(s);
                 ConnectedClient client = new ConnectedClient(s.getInetAddress().toString(), s.getPort());
-                for (int i = 0; i < WORKERS_PER_CONNECTION; ++i) {
+                if (CmdProtocol.WORKERS_PER_CONNECTION < 1) {
+                    Notify.error("Invalid number of workers per connection.");
+                    break;
+                }
+                for (int i = 0; i < CmdProtocol.WORKERS_PER_CONNECTION; ++i) {
                     Thread t = new Thread(new ServerWorker(c, account_manager, data_manager, client));
                     t.start();
                 }
