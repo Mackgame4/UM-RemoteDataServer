@@ -46,6 +46,10 @@ public class FramedConnection implements AutoCloseable {
         }
     }
 
+    public void sendBytes(int tag, String data) throws IOException {
+        send(tag, data.getBytes());
+    }
+
     public Frame receive() throws IOException {
         rec_lock.lock();
         try {

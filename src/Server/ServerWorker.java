@@ -2,119 +2,85 @@ package Server;
 
 import Shared.CmdProtocol;
 import Shared.FramedConnection;
-import Shared.FramedConnection.Frame;
 import Shared.Notify;
+import Shared.FramedConnection.Frame;
+import Shared.Account;
+
 import java.io.IOException;
 import java.net.Socket;
 
 public class ServerWorker implements Runnable {
     private Socket s;
     private final FramedConnection c;
-    private static final AccountManager account_manager = new AccountManager();
-    private ConnectedClient client;
+    private static AccountManager account_manager = new AccountManager();
+    private ConnectedClient client;  // Each worker will now use the same ConnectedClient for the connection.
 
-    public ServerWorker(Socket s, FramedConnection c) {
+    public ServerWorker(Socket s, FramedConnection c, ConnectedClient client) {
         this.s = s;
         this.c = c;
+        this.client = client;  // Shared client for this connection
     }
 
     @Override
     public void run() {
         try (c) {
             for (;;) {
-                Frame frame = c.receive();
+                Frame frame = c.receive();  // Receiving the frame from the client
                 int tag = frame.tag;
                 String data = new String(frame.data);
 
-                if (frame.tag == 0) {
-                    Notify.debug("Got one-way: " + data);
+                // Debug log to track the received data and tag
+                Notify.info("Received frame with tag: " + tag + ", Data: " + data);
 
-                    // Conexão do cliente
+                if (tag == CmdProtocol.ONE_WAY_TAG) { // One-way communication
+                    Notify.info("Got One-Way: " + data);
                     if (data.equals(CmdProtocol.CONNECT)) {
-                        handleConnect();
-                    } 
-                    // Comando de tarefa longa
-                    else if (data.equals("long-task")) {
-                        handleLongTask(tag);
-                    } 
-                    // Desconexão do cliente
-                    else if (data.equals(CmdProtocol.EXIT)) {
-                        handleDisconnect();
-                        break;
-                    } 
-                    // Comando getWhen
-                    else if (data.startsWith(CmdProtocol.GET_WHEN)) {
-                        handleGetWhen(tag, data);
+                        String client_ip = s.getInetAddress().toString();
+                        int client_port = s.getPort();
+                        Notify.success("Client connected from " + client_ip + ":" + client_port);
+                        client.setIp(client_ip);
+                        client.setPort(client_port);
+                        account_manager.addClient(client);  // Register client
                     }
-                } 
-                // Comando simples
-                else if (frame.tag % 2 == 1) {
-                    Notify.debug("Replying to: " + data);
-                    c.send(frame.tag, data.toUpperCase().getBytes());
-                } 
-                // Comando de streaming
-                else {
-                    handleStreaming(tag, data);
+                    if (data.equals(CmdProtocol.EXIT)) {
+                        if (client != null) {
+                            // Log that the exit command is being processed
+                            Notify.error("Received EXIT command from client " + client.getId());
+
+                            // Clean up and remove the client from the account manager
+                            account_manager.removeClient(client);
+
+                            // Close the framed connection and stop the thread
+                            c.close(); // Ensure the connection is properly closed
+                        } else {
+                            // If client is null, log the issue and exit the worker thread
+                            Notify.error("Received EXIT command, but client is null.");
+                        }
+                        break; // Exit the infinite loop
+                    }
+                } else if (tag % 2 == CmdProtocol.REQUEST_TAG) { // Reply for odd tags
+                    Notify.info("Replying to: " + data);
+                    c.sendBytes(tag, data.toUpperCase());
+                } else { // Streaming for even tags
+                    for (int i = 0; i < data.length(); ++i) {
+                        String str = data.substring(i, i + 1);
+                        Notify.info("Streaming: " + str);
+                        c.send(tag, str.getBytes());
+                    }
+                    c.send(tag, new byte[0]); // Signal end of stream
                 }
             }
         } catch (Exception e) {
             Notify.error("Exception in ServerWorker: " + e.getMessage());
-            e.printStackTrace();
         } finally {
-            // Libera o semáforo ao final
-            S_Main.connectionSemaphore.release();
+            // Ensure that the connection is closed when the worker thread ends
+            try {
+                if (c != null) {
+                    c.close();
+                }
+            } catch (IOException e) {
+                Notify.error("Error closing connection: " + e.getMessage());
+            }
         }
-    }
-
-    private void handleConnect() {
-        String client_ip = s.getInetAddress().toString();
-        int client_port = s.getPort();
-        Notify.success("Client connected from " + client_ip + ":" + client_port);
-        client = new ConnectedClient(client_ip, client_port);
-        account_manager.addClient(client);
-    }
-
-    private void handleDisconnect() {
-        if (client != null) {
-            Notify.info("Client " + client.getId() + " disconnected.");
-            account_manager.removeClient(client);
-        } else {
-            Notify.warning("Client disconnected without proper initialization.");
-        }
-    }
-
-    private void handleLongTask(int tag) throws InterruptedException, IOException {
-        Notify.debug("Processing long task...");
-        Thread.sleep(5000); // Simula 5 segundos de processamento
-        c.send(tag, "Long task completed".getBytes());
-    }
-
-    private void handleGetWhen(int tag, String data) throws IOException {
-        Notify.debug("Processing getWhen command: " + data);
-        String[] parts = data.split(" ", 4); // Formato esperado: "getWhen key keyCond valueCond"
-        if (parts.length == 4) {
-            String key = parts[1];
-            String keyCond = parts[2];
-            String valueCond = parts[3];
-            Notify.debug("Calling DataManager.getWhen for key: " + key + ", keyCond: " + keyCond + ", valueCond: " + valueCond);
-            byte[] result = DataManager.getWhen(key, keyCond, valueCond.getBytes());
-            Notify.debug("getWhen result: " + (result != null ? new String(result) : "null"));
-            c.send(tag, result != null ? result : "null".getBytes());
-        } else {
-            Notify.error("Invalid getWhen command format: " + data);
-            c.send(tag, "Invalid getWhen command format".getBytes());
-        }
-    }
-    
-    
-    
-
-    private void handleStreaming(int tag, String data) throws IOException {
-        for (int i = 0; i < data.length(); ++i) {
-            String str = data.substring(i, i + 1);
-            Notify.debug("Streaming: " + str);
-            c.send(tag, str.getBytes());
-        }
-        c.send(tag, new byte[0]);
     }
 }

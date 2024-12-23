@@ -65,7 +65,7 @@ public class Demultiplexer implements AutoCloseable {
         lock.lock();
         try {
             while (!buffers.containsKey(tag) || buffers.get(tag).isEmpty()) {
-                if (closed) throw new IOException("Demultiplexer is closed");
+                if (closed) throw new IOException("Demultiplexer is closed.");
                 notEmpty.await();
             }
             return buffers.get(tag).poll();
