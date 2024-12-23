@@ -11,16 +11,14 @@ import Shared.FramedConnection.Frame;
 import Shared.Account;
 
 class ServerWorker implements Runnable {
-    private Socket s;
     private final FramedConnection c;
     private final AccountManager account_manager;
     private ConnectedClient client;
 
-    public ServerWorker(Socket s, FramedConnection c, AccountManager account_manager) {
-        this.s = s;
+    public ServerWorker(FramedConnection c, AccountManager account_manager, ConnectedClient client) {
         this.c = c;
         this.account_manager = account_manager;
-        this.client = new ConnectedClient(s.getInetAddress().toString(), s.getPort());
+        this.client = client;
     }
 
     @Override
@@ -122,11 +120,12 @@ public class S_Main {
             while (running) {
                 Socket s = ss.accept();
                 FramedConnection c = new FramedConnection(s);
+                ConnectedClient client = new ConnectedClient(s.getInetAddress().toString(), s.getPort());
                 /*for (int i = 0; i < WORKERS_PER_CONNECTION; ++i) {
                     Thread t = new Thread(new ServerWorker(s, c, account_manager));
                     t.start();
                 }*/
-                Thread t = new Thread(new ServerWorker(s, c, account_manager));
+                Thread t = new Thread(new ServerWorker(c, account_manager, client));
                 t.start();
             }
             ss.close();
