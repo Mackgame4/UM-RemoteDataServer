@@ -84,4 +84,14 @@ public class Demultiplexer implements AutoCloseable {
         }
         conn.close();
     }
+
+    public void shutdown() throws IOException {
+        lock.lock();
+        try {
+            closed = true;
+            conn.sendBytes(CmdProtocol.ONE_WAY_TAG, CmdProtocol.EXIT); // Notify server
+        } finally {
+            lock.unlock();
+        }
+    }
 }

@@ -26,7 +26,7 @@ public class C_Main {
         try {
             Socket s = new Socket("0.0.0.0", 8888);
             BufferedReader system_in = new BufferedReader(new InputStreamReader(System.in));
-            Notify.info("Connected to server ("+s.getLocalAddress()+":"+s.getLocalPort()+") at "+s.getInetAddress()+":"+s.getPort());
+            Notify.info("Connected to server (" + s.getLocalAddress() + ":" + s.getLocalPort() + ") at " + s.getInetAddress() + ":" + s.getPort());
             Demultiplexer m = new Demultiplexer(new FramedConnection(s));
             m.start();
             m.sendBytes(CmdProtocol.ONE_WAY_TAG, CmdProtocol.CONNECT); // Send connect command to server
@@ -55,7 +55,7 @@ public class C_Main {
                 t.join();
                 incrementTag();
             }
-            m.sendBytes(CmdProtocol.ONE_WAY_TAG, CmdProtocol.EXIT); // Send exit command to server
+            m.shutdown();
             Notify.notify("error", "Exiting...");
             m.close();
             s.close();

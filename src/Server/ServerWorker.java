@@ -4,7 +4,6 @@ import Shared.CmdProtocol;
 import Shared.FramedConnection;
 import Shared.Notify;
 import Shared.FramedConnection.Frame;
-import Shared.Account;
 
 import java.io.IOException;
 import java.net.Socket;
