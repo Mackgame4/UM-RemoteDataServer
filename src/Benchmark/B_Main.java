@@ -57,12 +57,7 @@ public class B_Main {
             // Ensure login is always first after shuffle
             commands.add(0, "login admin admin");
             // Run the commands in a TestClient
-            boolean succ = false;
-            if (!Config.RUN_CONCURRENTLY) {
-                succ = TestClient.run(commands);
-            } else {
-                Notify.error("Concurrent execution not implemented."); // TODO: Implement concurrent execution
-            }
+            boolean succ = TestClient.run(commands);
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             Notify.success(description + " completed in " + duration + " ms.");
