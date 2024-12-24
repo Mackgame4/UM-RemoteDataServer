@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Config {
-    public static boolean RUN_THREADED = true;
+    public static boolean RUN_THREADED = true; // TODO: save results to a file and show them in a GUI graph
 
     // Define benchmark scenarios
     public static final List<BenchmarkScenario> benchmarks = Arrays.asList(

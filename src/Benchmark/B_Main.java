@@ -1,7 +1,7 @@
 package Benchmark;
 
 import java.util.ArrayList;
-import java.util.Collections;
+//import java.util.Collections;
 import java.util.List;
 
 import Shared.Notify;
@@ -53,7 +53,7 @@ public class B_Main {
                 int keyToRead = i % writeCount; // Cycle through written keys for reads
                 commands.add("read " + keyToRead);
             }
-            Collections.shuffle(commands); // Shuffle commands to mix reads and writes randomly (better simulation)
+            //Collections.shuffle(commands); // Shuffle commands to mix reads and writes randomly (better simulation)
             // Ensure login is always first after shuffle
             commands.add(0, "login admin admin");
             // Run the commands in a TestClient
