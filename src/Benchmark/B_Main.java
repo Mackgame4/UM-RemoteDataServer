@@ -25,6 +25,8 @@ class BenchmarkResult {
 }
 
 public class B_Main {
+    private static BenchmarkData benchmarkData = new BenchmarkData();
+
     public static void main(String[] args) {
         Notify.info("Starting Benchmark...");
         List<BenchmarkResult> results = new ArrayList<>();
@@ -70,8 +72,10 @@ public class B_Main {
 
     private static void printResults(List<BenchmarkResult> results) {
         System.out.println(Terminal.ANSI_YELLOW + "=== Benchmark Results ===" + Terminal.ANSI_RESET);
+        benchmarkData.writeLine("=Benchmark " + benchmarkData.getBenchmarkCount() + ": Threaded " + Config.RUN_THREADED + " | Results:");
         for (BenchmarkResult result : results) {
             System.out.println(result);
+            benchmarkData.writeLine(result.toString());
         }
     }
 }

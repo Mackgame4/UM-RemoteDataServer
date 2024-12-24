@@ -31,6 +31,13 @@ benchmark:
 	@javac -classpath src -d bin src/Benchmark/B_Main.java
 	@java -cp bin Benchmark.B_Main
 
+CHART_JAR=lib/jfreechart-1.0.19.jar
+JCOMMON_JAR=lib/jcommon-1.0.23.jar
+
+benchmark-graph:
+	@javac -classpath src;$(CHART_JAR);$(JCOMMON_JAR) -d bin src/Benchmark/G_Main.java
+	@java -cp bin;$(CHART_JAR);$(JCOMMON_JAR) Benchmark.G_Main
+
 relatorio: relatorio_build
 
 relatorio-build:

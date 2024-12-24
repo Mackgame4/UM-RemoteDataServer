@@ -46,3 +46,5 @@ hs_err_pid*
 # Custom build output folder
 /bin/
 /build/
+!lib/*.jar
+data.txt
