@@ -2,7 +2,7 @@ package Benchmark;
 
 import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CountDownLatch; // sort of like a barrier that waits for a fixed number of threads to complete before continuing (doesnt overflow the socket so it crashes)
 import java.util.concurrent.TimeUnit;
 
 import Shared.CmdProtocol;
