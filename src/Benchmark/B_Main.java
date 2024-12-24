@@ -29,10 +29,10 @@ public class B_Main {
         Notify.info("Starting Benchmark...");
         List<BenchmarkResult> results = new ArrayList<>();
 
-        // Define scenarios
-        results.add(runBenchmark("Read-heavy workload", 70, 300));
-        results.add(runBenchmark("Write-heavy workload", 30, 300));
-        results.add(runBenchmark("Balanced workload", 50, 300));
+        for (BenchmarkScenario scenario : Config.benchmarks) {
+            BenchmarkResult benchmark = runBenchmark(scenario.getDescription(), scenario.getReadPercentage(), scenario.getIterations());
+            results.add(benchmark);
+        }
 
         printResults(results);
     }
@@ -57,7 +57,12 @@ public class B_Main {
             // Ensure login is always first after shuffle
             commands.add(0, "login admin admin");
             // Run the commands in a TestClient
-            boolean succ = TestClient.run(commands);
+            boolean succ = false;
+            if (!Config.RUN_CONCURRENTLY) {
+                succ = TestClient.run(commands);
+            } else {
+                Notify.error("Concurrent execution not implemented."); // TODO: Implement concurrent execution
+            }
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             Notify.success(description + " completed in " + duration + " ms.");
