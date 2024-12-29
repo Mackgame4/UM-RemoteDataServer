@@ -1,8 +1,6 @@
 # UM-RemoteDataServer
 🗂️ Course project for UM for SD in 2024/25
 
-##### Relatorio Typst (depois adicionar à pasta "Relatorio" do github e adicionar o enunciado): https://typst.app/project/wkG3SSLaquiHfTKi6y6aZz
-
 ## Description
 This repository contains the code and tools for the **RemoteDataServer** project, designed for the **UM for SD course** in 2024/25. The project focuses on building a server-client architecture and includes functionalities for benchmarking and graphing performance data.
 
