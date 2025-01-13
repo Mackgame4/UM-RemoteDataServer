@@ -14,3 +14,4 @@ whats left:
 em espera até sair outro cliente.
 
 - [ ] fix?: when receiving a notification the comamand gets cut
+- [ ] fix: Create a Queue of Conditions to be used in the getWhen function (because as it is its waking all the threads when we have multiple getWhen functions waiting)
